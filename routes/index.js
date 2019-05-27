@@ -18,10 +18,10 @@ function init(){
 			WSE_LIST[i] = browserWSEndpoint;
 		}
 		console.log(WSE_LIST);
-	})();	
+	})();
 }
 
-const MAX_WSE = 2;  //启动几个浏览器 
+const MAX_WSE = 2;  //启动几个浏览器
 let WSE_LIST = []; //存储browserWSEndpoint列表
 init();
 // 截屏
@@ -35,14 +35,14 @@ router.get('/', function (req, res) {
 		await page.setViewport({
 			 		width: 800,
           height: 400
-		});		
+		});
 		await page.waitForSelector("#main");
 		let body = await page.$('#main');
         //调用页面内Dom对象的 screenshot 方法进行截图
     let imgFile  = Date.parse( new Date() ).toString() + Math.ceil(Math.random()*100);
  		await body.screenshot({
             path: './public/images/'+imgFile+'.png'
-    });   
+    });
 		await page.close();
 		res.send(imgFile);
 	})();
@@ -68,10 +68,11 @@ router.post('/crawl', function (req, res) {
 		  for (let i = 0; i < msg.args().length; ++i)
 		    consoles.push(`${msg.args()[i]}`);
 		});
-		const result = await page.evaluate(js => {
+		const result = await page.evaluate(code => {
         try{
-					let retData = eval(js)
-	        return [true,retData];
+					let retData = window.eval('(' + code + ')');
+					console.log(retData.load())
+	        return [true,retData.load()];
         }catch(e){
 						return [false,e.toString()];
         }
