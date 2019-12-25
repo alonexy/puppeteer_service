@@ -43,6 +43,7 @@ router.post('/test', function (req, res) {
         try{
             console.log("==>>>",req.body);
             let uri = req.body.uri;
+            let exec_js = req.body.exec_js;
             let regex = /^[http|https]+\:\/\/.*/;
             if (!regex.test(uri)){
                 res.send("uri error");
@@ -53,9 +54,14 @@ router.post('/test', function (req, res) {
             await page.goto(req.body.uri);
             await page.waitForSelector("body");
             let html = await page.content();
+
+            let exec_ret = await page.evaluate(exec_js_str => {
+                let obj = eval('(' + exec_js_str + ')');
+                return obj.run();
+            },exec_js);
             await page.close();
             //res.json({"msg":"ok","data":html,"status":0});
-            res.send(html);
+            res.send(exec_ret);
         }catch(e){
             res.send(e.toString());
         }
@@ -67,5 +73,16 @@ router.get('/browser_list', function (req, res) {
         res.send(WSE_LIST);
     })();
 });
-
+// 获取浏览器打开的网页
+router.get('/get_browser_page_list', function (req, res) {
+    (async () => {
+        let tmp = Math.floor(Math.random() * MAX_WSE);
+        let browserWSEndpoint = WSE_LIST[tmp];
+        let browser = await puppeteer.connect({browserWSEndpoint});
+        let page = await browser.newPage();
+        await page.goto("http://baidu.com/");
+        let pages = browser.pages();
+        res.send(pages);
+    })();
+});
 module.exports = router;
