@@ -73,16 +73,5 @@ router.get('/browser_list', function (req, res) {
         res.send(WSE_LIST);
     })();
 });
-// 获取浏览器打开的网页
-router.get('/get_browser_page_list', function (req, res) {
-    (async () => {
-        let tmp = Math.floor(Math.random() * MAX_WSE);
-        let browserWSEndpoint = WSE_LIST[tmp];
-        let browser = await puppeteer.connect({browserWSEndpoint});
-        let page = await browser.newPage();
-        await page.goto("http://baidu.com/");
-        let pages = browser.pages();
-        res.send(pages);
-    })();
-});
+
 module.exports = router;
