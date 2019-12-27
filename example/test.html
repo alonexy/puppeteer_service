@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,height=device-height">
+    <title>CRAWLX-TEST</title>
+    <link rel="stylesheet" href="./../public/spectre/spectre.min.css">
+    <link rel="stylesheet" href="./../public/spectre/spectre-exp.min.css">
+    <link rel="stylesheet" href="./../public/spectre/spectre-icons.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+</head>
+<style>
+    .test {
+        border-radius: 10px;
+        opacity: 0.99;
+        background-color: rgb(249, 251, 247);
+        border-style: solid;
+        border-color: #f19090 #8b8be9;
+    }
+</style>
+<body>
+<!-- hero example -->
+<div class="container p-2 test">
+    <header class="navbar">
+        <section class="navbar-section">
+            <a href="http://alonexy.com" class="btn btn-link">Alonexy</a>
+            <a href="https://github.com/alonexy" class="btn btn-link">Git</a>
+        </section>
+    </header>
+    <div class="columns">
+        <!-- 1 -->
+        <div class="column col-12">
+            <div class="columns col-oneline">
+                <div class="column col-8 mx-2  test">
+                    <form class="form-horizontal" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label class="form-label" for="exec_uri">目标网址:</label>
+                            <input class="form-input" type="text" id="exec_uri"
+                                   value="http://top.baidu.com/buzz?b=1&c=513&fr=topbuzz_b341_c513" placeholder="URL">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="exec_js">执行代码:</label>
+                            <textarea class="form-input" id="exec_js" placeholder="执行代码" rows="20">
+                                { "run":function () {
+                                  return new Promise(function(resolve, reject) {
+                                        try {
+                                            var doms = document.getElementsByClassName("list-table")[0].getElementsByTagName("tr");
+                                            var i = 1;
+                                            var list = new Array();
+                                            for (i;i<doms.length;i++) {
+                                                var obj = new Object();
+                                                //item-tr
+                                                if ( doms[i].getAttribute("class") == 'item-tr') {
+                                                    continue;
+                                                }
+                                                obj.title = doms[i].getElementsByClassName("list-title")[0].innerText;
+                                                obj.title_href = doms[i].getElementsByClassName("list-title")[0].getAttribute("href");
+                                                obj.index = doms[i].getElementsByClassName("last")[0].innerText;
+                                                list.push(obj);
+                                            }
+                                            resolve(list);
+                                        } catch (e) {
+                                          reject(e.toString());
+                                        }
+                                    });
+                                  } 
+                                }
+                            </textarea>
+                        </div>
+                        <button class="btn btn-success " id="send">Send</button>
+                    </form>
+                </div>
+                <div class="column col-auto test mx-2 ">
+                    <!-- TODO -->
+                    <p id="st"></p>
+
+                    <p id="ed"></p>
+
+                    <p id="c"></p>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+<div class="container p-2 my-2 test">
+    <!-- 2 -->
+    <div class="column col-auto">
+        <div class="text-error" id="log">
+            <!-- ... -->
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(function () {
+        // setInterval(function(){
+        //   $("#send").click();
+        // },3000);
+        $("#send").bind({
+            click: function () {
+                var exec_uri = $("#exec_uri").val();
+                var exec_js = $("#exec_js").val();
+                console.log(exec_uri)
+                $(this).addClass("loading");
+                var that = $(this);
+                var st = new Date().getTime()
+                $("#st").html("请求时间：" + st)
+                $.ajax({
+                    type: "POST",
+                    url: "http://127.0.0.1:3000/test",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    data: {
+                        'uri': exec_uri,
+                        'exec_js': exec_js
+                    },
+                    dataType: "json",
+                    success: function (result) {//返回数据根据结果进行相应的处理
+                        console.log(result)
+                        var ed = new Date().getTime();
+                        $("#ed").html("结束时间：" + ed);
+                        $("#c").html("耗时：" + (ed - st));
+                        if (result.code == 0) {
+                            var l = 0;
+                            var list = new Array();
+
+                            for (var j = 0; j < result.data.length; j++) {
+                                var val = Object.entries(result.data[j]);
+                                var val_len = val.length;
+                                var ht = '<div class="text-left text-dark">';
+                                for (var k = 0; k < val_len; k++) {
+                                    ht += "【" + val[k][0] + ' => ' + val[k][1] + "】<br>";
+                                }
+                                ht += '</div>';
+                                // list.push( JSON.stringify(result.data[j]) );
+                                list.push(ht);
+                            }
+                            $("#log").html(list.join("<br>"))
+                        } else {
+                            $("#log").html(result.msg)
+                        }
+                        $(that).removeClass("loading");
+                    }
+                });
+
+
+            }
+        });
+
+    });
+</script>
+</body>
+</html>
