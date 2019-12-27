@@ -28,9 +28,14 @@ function init() {
 const MAX_WSE = 2;  //启动几个浏览器
 let WSE_LIST = []; //存储browserWSEndpoint列表
 init();
-//router.param('uri', function (req, res, next,uri) {
-//    next();
-//});
+router.all('*', (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods","*");
+    res.header("X-Powered-By",' 3.2.1');
+    res.header("Content-Type", "application/json;charset=utf-8");
+    next();
+});
 router.get("/",function(req,res){
     res.json({"msg":"ok","status":0});
 });
@@ -41,12 +46,12 @@ router.post('/test', function (req, res) {
     let tmp = Math.floor(Math.random() * MAX_WSE);
     (async () => {
         try{
-            console.log("==>>>",req.body);
+            //console.log("==>>>",req.body);
             let uri = req.body.uri;
             let exec_js = req.body.exec_js;
             let regex = /^[http|https]+\:\/\/.*/;
             if (!regex.test(uri)){
-                res.send("uri error");
+                return res.json({code:1,msg:"uri error"});
             }
             let browserWSEndpoint = WSE_LIST[tmp];
             const browser = await puppeteer.connect({browserWSEndpoint});
@@ -54,16 +59,23 @@ router.post('/test', function (req, res) {
             await page.goto(req.body.uri);
             await page.waitForSelector("body");
             let html = await page.content();
-
             let exec_ret = await page.evaluate(exec_js_str => {
-                let obj = eval('(' + exec_js_str + ')');
-                return obj.run();
+                return new Promise((resolve, reject) => {
+                    try{
+                        let obj = eval('(' + exec_js_str + ')');
+                        let retObj = obj.run();
+                        resolve(retObj);
+                    }catch(ee){
+                        reject(ee.toString());
+                    }
+                });
             },exec_js);
+            console.log("exec_ret-->>",exec_ret);
             await page.close();
             //res.json({"msg":"ok","data":html,"status":0});
-            res.send(exec_ret);
+            res.json({code:0,data:exec_ret});
         }catch(e){
-            res.send(e.toString());
+            res.json({code:2,msg:e.toString()});
         }
     })();
 });
