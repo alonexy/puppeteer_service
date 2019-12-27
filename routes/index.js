@@ -70,7 +70,6 @@ router.post('/test', function (req, res) {
                     }
                 });
             },exec_js);
-            console.log("exec_ret-->>",exec_ret);
             await page.close();
             //res.json({"msg":"ok","data":html,"status":0});
             res.json({code:0,data:exec_ret});
